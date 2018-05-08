@@ -17,7 +17,7 @@ void look(node *requestlist,int *totalBlockChange, int *averageWaitingTime,int *
 void clook(node *requestlist,int *totalBlockChange, int *averageWaitingTime,int *stdWaitTime);
 void addNode(node **head,int time,int cylinder;);
 
-
+//addnode for linkedlist
 void addNode(node **head,int time,int cylinder){
     //printf("adding val:  %d %d ",time,cylinder;);
     if ((*head) == NULL){
