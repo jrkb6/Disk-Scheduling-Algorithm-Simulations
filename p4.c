@@ -88,13 +88,19 @@ void fcfs(node *requestlist,int *totalBlockChange, int *averageWaitingTime,int *
     int passedTime = 0;
     while ( temp != NULL){
         (*totalBlockChange)  += abs(prev-temp->cylinder);
-        if(passedTime < )
-        passedTime += temp->cylinder + temp->arrival_time;
+        if(passedTime <= temp->arrival_time){
+            passedTime = (*totalBlockChange) + temp->arrival_time;
+        }
+        else {
+            averageWaitingTime += passedTime - temp->arrival_time;
+            passedTime += (*totalBlockChange);
+        }
+
         prev = temp->cylinder;
-
-
         temp = temp->next;
-    }   
+    }
+    (*averageWaitingTime) /= numberofrequest;
+    
 }
 void sstf(node *requestlist,int *totalBlockChange, int *averageWaitingTime,int *stdWaitTime){    //assuming we're 1 initial. So first comer is also included in calculation.
     node *temp  = requestlist;
