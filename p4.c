@@ -8,7 +8,7 @@ typedef struct node{
     int arrival_time;
     int cylinder;
 }node;
-//dsflad
+//erdem
 //headers
 void readfile(char **argv);
 void fcfs(node *requestlist,int *totalBlockChange, int *averageWaitingTime,int *stdWaitTime);
