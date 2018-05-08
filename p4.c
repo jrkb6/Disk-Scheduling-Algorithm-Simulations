@@ -1,12 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-
 //struct for the store input file information with corresponding list
 typedef struct node{
     struct node *next;
     int arrival_time;
     int cylinder;
+    int exec_start;
 }node;
 //erdem
 //headers
@@ -24,6 +24,7 @@ void addNode(node **head,int time,int cylinder){
         (*head) = malloc(sizeof(node));
         (*head)->arrival_time = time;
         (*head)->cylinder = cylinder;
+        (*head)->exec_start = 0;
         (*head)->next = NULL;
     }
     else{
@@ -34,6 +35,7 @@ void addNode(node **head,int time,int cylinder){
         node *newNode =malloc(sizeof(node));
         newNode->arrival_time = time;
         newNode->cylinder = cylinder;
+        newNode->exec_start = 0;
         newNode->next = NULL;
         temp->next = newNode;
     }
@@ -77,22 +79,24 @@ void readfile(char **argv){
     //printf("closing file");
     fclose(handler);
 }
-void fcfs(node *requestlist,int *totalBlockChange, int *averageWaitingTime,int *stdWaitTime){    //assuming we're 0 initial. So first comer is also included in calculation.
+void fcfs(node *requestlist,int *totalBlockChange, int *averageWaitingTime,int *stdWaitTime){    //assuming we're 1 initial. So first comer is also included in calculation.
     node *temp  = requestlist;
     (*totalBlockChange) = 0;
     (*averageWaitingTime) = 0;
     (*stdWaitTime) = 0;
-    int prev = 0;
+    int prev = 1;
     int passedTime = 0;
     while ( temp != NULL){
         (*totalBlockChange)  += abs(prev-temp->cylinder);
+        if(passedTime < )
+        passedTime += temp->cylinder + temp->arrival_time;
         prev = temp->cylinder;
 
 
         temp = temp->next;
     }   
 }
-void sstf(node *requestlist,int *totalBlockChange, int *averageWaitingTime,int *stdWaitTime){    //assuming we're 0 initial. So first comer is also included in calculation.
+void sstf(node *requestlist,int *totalBlockChange, int *averageWaitingTime,int *stdWaitTime){    //assuming we're 1 initial. So first comer is also included in calculation.
     node *temp  = requestlist;
     (*totalBlockChange) = 0;
     (*averageWaitingTime) = 0;
