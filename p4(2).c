@@ -16,7 +16,7 @@ void readfile(char **argv);
 void fcfs(node *requestlist,int *totalBlockChange, int *averageWaitingTime,int *stdWaitTime);
 void sstf(node *requestlist,int *totalBlockChange, double *averageWaitingTime,double *stdWaitTime);
 void look(node *requestlist,int *totalBlockChange, double *averageWaitingTime,double *stdWaitTime);
-void clook(node *requestlist,int *totalBlockChange, int *averageWaitingTime,int *stdWaitTime);
+void clook(node *requestlist,int *totalBlockChange, double *averageWaitingTime,double *stdWaitTime);
 void addNode(node **head,int time,int cylinder;);
 void resetNodes(node * requestlist);
 //addnode for linkedlist
@@ -70,13 +70,20 @@ int main(int argc, char **argv){
 
     sstf(requestList,&totalBlockChange,&averageWaitingTime,&stdWaitTime);
 
-    printf("sstf result= %d \t%f\t%f\n",totalBlockChange,averageWaitingTime,stdWaitTime);    
+    printf("sstf result:     %d \t%f\t%f\n",totalBlockChange,averageWaitingTime,stdWaitTime);    
 
     resetNodes(requestList);
 
     look(requestList,&totalBlockChange,&averageWaitingTime,&stdWaitTime);
 
-    printf("look result= %d \t%f\t%f\n",totalBlockChange,averageWaitingTime,stdWaitTime);
+    printf("look result:      %d \t%f\t%f\n",totalBlockChange,averageWaitingTime,stdWaitTime);
+
+    resetNodes(requestList);
+
+    clook(requestList,&totalBlockChange,&averageWaitingTime,&stdWaitTime);
+
+    printf("clook result:      %d \t%f\t%f\n",totalBlockChange,averageWaitingTime,stdWaitTime);
+
 
     return 0;
 }
@@ -136,21 +143,21 @@ void fcfs(node *requestlist,int *totalBlockChange, int *averageWaitingTime,int *
     (*averageWaitingTime) /= numberofrequest;
     
 }
-double stdDeviation(node* list, int average)
+double stdDeviation(node* list, double average)
 {
-   ;
+   
     double sum = 0;
     node* temp = list;
     while(temp!=NULL)
     {   
         
-
-        sum += pow(temp->waiting_time-average,2);    
+       
+        sum += pow(abs(temp->waiting_time-average),2);    
 
         temp = temp->next;   
     }
-
-    return sqrt(sum/numberofrequest);
+    printf("std : %d \n",numberofrequest);
+    return (double)sqrt(sum/numberofrequest);
 }
 
 double averageWaiting(node* list)
@@ -161,15 +168,12 @@ double averageWaiting(node* list)
     while(temp!=NULL)
     {
        
-        if(temp->arrival_time<temp->exec_start)
-        {
-            temp->waiting_time = temp->exec_start-temp->arrival_time;
-            sum+=temp->waiting_time;
-        } 
-        else
-        {
-            temp->waiting_time = 0;
-        }
+        
+        temp->waiting_time = temp->exec_start-temp->arrival_time;
+        sum+=temp->waiting_time;
+        
+            
+        
         temp=temp->next;
     }
    
@@ -194,6 +198,7 @@ node* findShortest(node *reqlist, int currentCylinder,int currentTime){
     node *temp = reqlist;
     node* closest = reqlist;
     int shortestDistance=N+1;
+
     while(temp!=NULL)
     {
         if(!temp->visited&&abs(temp->cylinder-currentCylinder)<shortestDistance&&currentTime>=temp->arrival_time)
@@ -204,7 +209,13 @@ node* findShortest(node *reqlist, int currentCylinder,int currentTime){
                 finded = 1;
             
         }
+        if(temp->arrival_time>currentTime)
+        {
+
+            break;
+        }
         temp = temp->next;
+
     }
     if(!finded){
         node* re = NULL;
@@ -229,7 +240,9 @@ void sstf(node *requestlist,int *totalBlockChange, double *averageWaitingTime,do
     closest->visited = 1;
     closest->exec_start = currentTime;
     currentTime+=abs(closest->cylinder-startCylinder);
+    
     (*totalBlockChange)=abs(closest->cylinder-startCylinder);
+    printf("move to %d\n",closest->cylinder);
     temp=closest;
     while(!allVisited(requestlist))
     {
@@ -244,7 +257,9 @@ void sstf(node *requestlist,int *totalBlockChange, double *averageWaitingTime,do
         closest->visited = 1;
         closest->exec_start = currentTime;
         currentTime+=abs(closest->cylinder-temp->cylinder);
+        
         (*totalBlockChange)+=abs(closest->cylinder-temp->cylinder);
+        printf("move to %d\n",closest->cylinder);
         temp=closest;
     }
 
@@ -269,6 +284,11 @@ node* lookForLeft(node * requestlist,int currentCylinder,int currentTime)
             shortestDistance = abs(currentCylinder-temp->cylinder);
             finded = 1;
             
+        }
+        if(temp->arrival_time>currentTime)
+        {
+
+            break;
         }
         temp = temp->next;
     }
@@ -295,7 +315,13 @@ node* lookForRight(node * requestlist,int currentCylinder,int currentTime)
             finded = 1;
             
         }
+        if(temp->arrival_time>currentTime)
+        {
+
+            break;
+        }
         temp = temp->next;
+
     }
     if(!finded){
         node* re = NULL;
@@ -306,7 +332,111 @@ node* lookForRight(node * requestlist,int currentCylinder,int currentTime)
 
 
 void look(node *requestlist,int *totalBlockChange, double *averageWaitingTime,double *stdWaitTime)
-{    //assuming we're 0 initial. So first comer is also included in calculation.
+{   
+    node *temp  = requestlist;
+    (*totalBlockChange) = 0;
+    int startCylinder=1;
+    int currentTime=0;
+    int direction = 1; //1 for right, 0 for left
+    int start = 0;
+    node * closestRight;
+    node * closestLeft;
+    int currentCylinder = 1;
+
+    while(!allVisited(requestlist))
+    {
+        if(!start)
+        {
+           
+            currentCylinder = 1;
+        }
+        else if(start)
+        {
+            currentCylinder = temp->cylinder;
+        }
+        
+        closestRight = lookForRight(requestlist,currentCylinder,currentTime);
+        closestLeft = lookForLeft(requestlist,currentCylinder,currentTime);
+
+        if(closestRight==NULL&&closestLeft==NULL)
+        {
+        
+            currentTime++; 
+        }
+
+        else if(direction==1 && closestRight!=NULL)
+        {
+            if(start==0)
+                start=1;
+            printf("---right%d\n",closestRight->cylinder );
+            closestRight->visited = 1;
+            closestRight->exec_start = currentTime;
+            currentTime+=abs(closestRight->cylinder-currentCylinder);
+            
+            (*totalBlockChange)+=abs(closestRight->cylinder-currentCylinder);
+            temp=closestRight;
+        }
+        else if(direction==0 && closestLeft!=NULL)
+        {   
+             printf("---left%d\n",closestLeft->cylinder );
+            closestLeft->visited = 1;
+            closestLeft->exec_start = currentTime;
+            currentTime+=abs(closestLeft->cylinder-currentCylinder);
+            
+            (*totalBlockChange)+=abs(closestLeft->cylinder-currentCylinder);
+            temp=closestLeft;
+        }
+
+        else
+        {
+            
+            if(direction==1)
+                {direction=0;}
+            else if(direction==0)
+                {direction=1;}
+        }
+
+
+
+    }
+
+    (*averageWaitingTime) = averageWaiting(requestlist);
+    (*stdWaitTime)= stdDeviation(requestlist,(*averageWaitingTime));
+ 
+}
+
+node* findLeftest(node *  requestlist, int currentTime)
+{
+    int finded=0; 
+    node *temp = requestlist;
+    node* closest = requestlist;
+    int smallest=N+1;
+    while(temp!=NULL)
+    {
+        if(!temp->visited && temp->cylinder<smallest && currentTime >= temp->arrival_time)
+        {
+            
+            closest = temp;
+            smallest = temp->cylinder;
+            finded = 1;
+            
+        }
+        if(temp->arrival_time>currentTime)
+        {
+
+            break;
+        }
+        temp = temp->next;
+    }
+
+    if(!finded){
+        node* re = NULL;
+        return re;
+    }
+    return closest;  
+}
+
+void clook(node *requestlist,int *totalBlockChange, double *averageWaitingTime,double *stdWaitTime){    //assuming we're 0 initial. So first comer is also included in calculation.
     node *temp  = requestlist;
     (*totalBlockChange) = 0;
     int startCylinder=1;
@@ -314,7 +444,7 @@ void look(node *requestlist,int *totalBlockChange, double *averageWaitingTime,do
     int direction = 1; //1 for right, 0 for left
     int start = 0;
     node * closest1;
-    node * closest2;
+    node * leftest;
     int currentCylinder = 1;
 
     while(!allVisited(requestlist))
@@ -330,15 +460,15 @@ void look(node *requestlist,int *totalBlockChange, double *averageWaitingTime,do
         }
         
         closest1 = lookForRight(requestlist,currentCylinder,currentTime);
-        closest2 = lookForLeft(requestlist,currentCylinder,currentTime);
+        leftest = findLeftest(requestlist,currentTime);
 
-        if(closest1==NULL&&closest2==NULL)
+        if(closest1==NULL&&leftest==NULL)
         {
             
             currentTime++; 
         }
 
-        else if(direction==1 && closest1!=NULL)
+        else if(closest1!=NULL)
         {
             if(start==0)
                 start=1;
@@ -346,28 +476,23 @@ void look(node *requestlist,int *totalBlockChange, double *averageWaitingTime,do
             closest1->visited = 1;
             closest1->exec_start = currentTime;
             currentTime+=abs(closest1->cylinder-currentCylinder);
+            
             (*totalBlockChange)+=abs(closest1->cylinder-currentCylinder);
             temp=closest1;
         }
-        else if(direction==0 && closest2!=NULL)
+        else if(leftest!=NULL)
         {   
-             printf("---left%d\n",closest2->cylinder );
-            closest2->visited = 1;
-            closest2->exec_start = currentTime;
-            currentTime+=abs(closest2->cylinder-currentCylinder);
-            (*totalBlockChange)+=abs(closest2->cylinder-currentCylinder);
-            temp=closest2;
+             printf("---restart%d\n",leftest->cylinder );
+            leftest->visited = 1;
+            leftest->exec_start = currentTime;
+            currentTime+=abs(leftest->cylinder-currentCylinder);
+            
+            (*totalBlockChange)+=abs(leftest->cylinder-currentCylinder);
+            temp=leftest;
         }
 
-        else if((direction==1&&closest2!=NULL)||(direction==0&&closest1!=NULL))
-        {
-            if(direction==1)
-                direction=0;
-            else if(direction==0)
-                direction=1;
-        }
-
-        printf("currentTime: %d\n",currentTime);
+      
+        
 
 
     }
@@ -375,19 +500,5 @@ void look(node *requestlist,int *totalBlockChange, double *averageWaitingTime,do
     (*averageWaitingTime) = averageWaiting(requestlist);
     (*stdWaitTime)= stdDeviation(requestlist,(*averageWaitingTime));
  
-}
 
-void clook(node *requestlist,int *totalBlockChange, int *averageWaitingTime,int *stdWaitTime){    //assuming we're 0 initial. So first comer is also included in calculation.
-    node *temp  = requestlist;
-    (*totalBlockChange) = 0;
-    (*averageWaitingTime) = 0;
-    (*stdWaitTime) = 0;
-    int prev = 0;
-    while ( temp != NULL){
-        (*totalBlockChange)  += abs(prev-temp->cylinder);
-        prev = temp->cylinder;
-
-
-        temp = temp->next;
-    }   
 }
