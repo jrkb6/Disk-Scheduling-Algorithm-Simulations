@@ -13,12 +13,13 @@ typedef struct node{
 //erdem
 //headers
 void readfile(char **argv);
-void fcfs(node *requestlist,int *totalBlockChange, int *averageWaitingTime,int *stdWaitTime);
+void fcfs(node *requestlist,int *totalBlockChange, double *averageWaitingTime,double *stdWaitTime);
 void sstf(node *requestlist,int *totalBlockChange, double *averageWaitingTime,double *stdWaitTime);
 void look(node *requestlist,int *totalBlockChange, double *averageWaitingTime,double *stdWaitTime);
 void clook(node *requestlist,int *totalBlockChange, double *averageWaitingTime,double *stdWaitTime);
-void addNode(node **head,int time,int cylinder;);
+void addNode(node **head,int time,int cylinder);
 void resetNodes(node * requestlist);
+double stdDeviation(node* list, double average);
 //addnode for linkedlist
 void addNode(node **head,int time,int cylinder){
     //printf("adding val:  %d %d ",time,cylinder;);
@@ -63,26 +64,29 @@ int main(int argc, char **argv){
     double stdWaitTime;
 
     //function calls
-   // fcfs(requestList,&totalBlockChange,&averageWaitingTime,&stdWaitTime);
+    printf("before fcfs\n");
+    fcfs(requestList,&totalBlockChange,&averageWaitingTime,&stdWaitTime);
 
     //printing results
-   // printf("FCFS result= %d \t%f\t%f\n",totalBlockChange,averageWaitingTime,stdWaitTime);
+    printf("FCFS :  %d \t%f\t%f\n",totalBlockChange,averageWaitingTime,stdWaitTime);
+    
+    //resetNodes(requestList);
 
     sstf(requestList,&totalBlockChange,&averageWaitingTime,&stdWaitTime);
 
-    printf("sstf result:     %d \t%f\t%f\n",totalBlockChange,averageWaitingTime,stdWaitTime);    
+    printf("SSTF :     %d \t%f\t%f\n",totalBlockChange,averageWaitingTime,stdWaitTime);    
 
     resetNodes(requestList);
 
     look(requestList,&totalBlockChange,&averageWaitingTime,&stdWaitTime);
 
-    printf("look result:      %d \t%f\t%f\n",totalBlockChange,averageWaitingTime,stdWaitTime);
+    printf("LOOK :      %d \t%f\t%f\n",totalBlockChange,averageWaitingTime,stdWaitTime);
 
     resetNodes(requestList);
 
     clook(requestList,&totalBlockChange,&averageWaitingTime,&stdWaitTime);
 
-    printf("clook result:      %d \t%f\t%f\n",totalBlockChange,averageWaitingTime,stdWaitTime);
+    printf("CLOOK:      %d \t%f\t%f\n",totalBlockChange,averageWaitingTime,stdWaitTime);
 
 
     return 0;
@@ -111,8 +115,9 @@ void readfile(char **argv){
     while(fscanf(handler,"%d",&t) == 1){
         int cylinder;
         if(fscanf(handler,"%d",&cylinder) == 1){
-            //printf("t: %d blk: %d \n",t,cylinder;);
+            
             addNode(&requestList,t,cylinder);
+            //printf("t: %d blk: %d \n",t,cylinder);
             numberofrequest++;
         }
         cnt++;
@@ -120,28 +125,31 @@ void readfile(char **argv){
     //printf("closing file");
     fclose(handler);
 }
-void fcfs(node *requestlist,int *totalBlockChange, int *averageWaitingTime,int *stdWaitTime){    //assuming we're 1 initial. So first comer is also included in calculation.
-    node *temp  = requestlist;
+void fcfs(node *requestlist, int *totalBlockChange, double *averageWaitingTime, double *stdWaitTime){ //assuming we're at 1 initial. So first comer is also included in calculation.
+    node *temp = requestlist;
     (*totalBlockChange) = 0;
     (*averageWaitingTime) = 0;
     (*stdWaitTime) = 0;
     int prev = 1;
     int passedTime = 0;
-    while ( temp != NULL){
-        (*totalBlockChange)  += abs(prev-temp->cylinder);
-        if(passedTime <= temp->arrival_time){
-            passedTime = (*totalBlockChange) + temp->arrival_time;
+    while (temp != NULL)
+    {
+        (*totalBlockChange) += abs(prev - temp->cylinder);
+        if (passedTime <= temp->arrival_time)
+        {
+            passedTime = abs(prev - temp->cylinder) + temp->arrival_time;
         }
-        else {
-            averageWaitingTime += passedTime - temp->arrival_time;
-            passedTime += (*totalBlockChange);
+        else
+        {   
+            temp->waiting_time = (passedTime - temp->arrival_time);
+            (*averageWaitingTime) += temp->waiting_time;
+            passedTime += abs(prev - temp->cylinder);
         }
-
         prev = temp->cylinder;
         temp = temp->next;
     }
     (*averageWaitingTime) /= numberofrequest;
-    
+    (*stdWaitTime) = stdDeviation(requestList,(*averageWaitingTime));
 }
 double stdDeviation(node* list, double average)
 {
@@ -156,8 +164,8 @@ double stdDeviation(node* list, double average)
 
         temp = temp->next;   
     }
-    printf("std : %d \n",numberofrequest);
-    return (double)sqrt(sum/numberofrequest);
+    //printf("std : %d \n",numberofrequest);
+    return (double)sqrt(sum/(numberofrequest-1));
 }
 
 double averageWaiting(node* list)
@@ -168,12 +176,8 @@ double averageWaiting(node* list)
     while(temp!=NULL)
     {
        
-        
         temp->waiting_time = temp->exec_start-temp->arrival_time;
         sum+=temp->waiting_time;
-        
-            
-        
         temp=temp->next;
     }
    
@@ -242,7 +246,7 @@ void sstf(node *requestlist,int *totalBlockChange, double *averageWaitingTime,do
     currentTime+=abs(closest->cylinder-startCylinder);
     
     (*totalBlockChange)=abs(closest->cylinder-startCylinder);
-    printf("move to %d\n",closest->cylinder);
+    //printf("move to %d\n",closest->cylinder);
     temp=closest;
     while(!allVisited(requestlist))
     {
@@ -259,7 +263,7 @@ void sstf(node *requestlist,int *totalBlockChange, double *averageWaitingTime,do
         currentTime+=abs(closest->cylinder-temp->cylinder);
         
         (*totalBlockChange)+=abs(closest->cylinder-temp->cylinder);
-        printf("move to %d\n",closest->cylinder);
+        //printf("move to %d\n",closest->cylinder);
         temp=closest;
     }
 
@@ -368,7 +372,7 @@ void look(node *requestlist,int *totalBlockChange, double *averageWaitingTime,do
         {
             if(start==0)
                 start=1;
-            printf("---right%d\n",closestRight->cylinder );
+            //printf("---right%d\n",closestRight->cylinder );
             closestRight->visited = 1;
             closestRight->exec_start = currentTime;
             currentTime+=abs(closestRight->cylinder-currentCylinder);
@@ -378,7 +382,7 @@ void look(node *requestlist,int *totalBlockChange, double *averageWaitingTime,do
         }
         else if(direction==0 && closestLeft!=NULL)
         {   
-             printf("---left%d\n",closestLeft->cylinder );
+            // printf("---left%d\n",closestLeft->cylinder );
             closestLeft->visited = 1;
             closestLeft->exec_start = currentTime;
             currentTime+=abs(closestLeft->cylinder-currentCylinder);
@@ -472,7 +476,7 @@ void clook(node *requestlist,int *totalBlockChange, double *averageWaitingTime,d
         {
             if(start==0)
                 start=1;
-            printf("---right%d\n",closest1->cylinder );
+            //printf("---right%d\n",closest1->cylinder );
             closest1->visited = 1;
             closest1->exec_start = currentTime;
             currentTime+=abs(closest1->cylinder-currentCylinder);
@@ -482,7 +486,7 @@ void clook(node *requestlist,int *totalBlockChange, double *averageWaitingTime,d
         }
         else if(leftest!=NULL)
         {   
-             printf("---restart%d\n",leftest->cylinder );
+            // printf("---restart%d\n",leftest->cylinder );
             leftest->visited = 1;
             leftest->exec_start = currentTime;
             currentTime+=abs(leftest->cylinder-currentCylinder);
