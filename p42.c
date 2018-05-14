@@ -64,9 +64,9 @@ int main(int argc, char **argv){
     double stdWaitTime;
 
     //function calls
-    printf("before fcfs\n");
+    
     fcfs(requestList,&totalBlockChange,&averageWaitingTime,&stdWaitTime);
-
+    resetNodes(requestList);
     //printing results
     printf("FCFS :  %d \t%f\t%f\n",totalBlockChange,averageWaitingTime,stdWaitTime);
     
@@ -164,7 +164,7 @@ double stdDeviation(node* list, double average)
 
         temp = temp->next;   
     }
-    //printf("std : %d \n",numberofrequest);
+    //printf("std : %d %f \n",numberofrequest,sum);
     return (double)sqrt(sum/(numberofrequest-1));
 }
 
